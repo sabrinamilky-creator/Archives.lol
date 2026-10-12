@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeoDemo | Proyecto escolar</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b1020;
+      color: #f5f7ff;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+    main {
+      width: 100%;
+      max-width: 540px;
+      background: #151d33;
+      border: 1px solid #303b59;
+      border-radius: 22px;
+      padding: 28px;
+    }
+    h1 { margin-bottom: 8px; }
+    p { color: #c1cbe0; line-height: 1.6; }
+    .tag { color: #79e0c1; font-size: 13px; }
+    button {
+      width: 100%;
+      padding: 15px;
+      margin: 12px 0;
+      background: #79e0c1;
+      color: #10172a;
+      font-weight: bold;
+      border: 0;
+      border-radius: 12px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .result {
+      background: #0c1427;
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 12px;
+      overflow-wrap: anywhere;
+    }
+    .value { color: #79e0c1; }
+    a { color: #9fc8ff; }
+    footer { font-size: 12px; margin-top: 18px; }
+  </style>
+</head>
+<body>
+<main>
+  <span class="tag">PROYECTO ESCOLAR · TECNOLOGÍA</span>
+  <h1>GeoDemo</h1>
+  <p>
+    Demostración de geolocalización web.
+    Tu ubicación solo se mostrará en esta pantalla
+    y no se enviará ni guardará en un servidor.
+  </p>
+
+  <button id="locate">Solicitar permiso de ubicación</button>
+  <p id="status" role="status">Esperando tu decisión.</p>
+
+  <section class="result" aria-live="polite">
+    <p>Latitud: <span class="value" id="lat">—</span></p>
+    <p>Longitud: <span class="value" id="lon">—</span></p>
+    <p>Precisión: <span class="value" id="accuracy">—</span></p>
+    <p>Navegador: <span class="value" id="browser">—</span></p>
+    <p>Idioma: <span class="value" id="language">—</span></p>
+    <p>Plataforma segura HTTPS: <span class="value" id="secure">—</span></p>
+  </section>
+
+  <p id="map"></p>
+  <footer>
+    La ubicación es opcional. Puedes rechazar el permiso.
+    No introduzcas información personal.
+  </footer>
+</main>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  $("browser").textContent = navigator.userAgent;
+  $("language").textContent = navigator.language;
+  $("secure").textContent = window.isSecureContext ? "Sí" : "No";
+
+  $("locate").addEventListener("click", () => {
+    if (!window.isSecureContext) {
+      $("status").textContent =
+        "Abre esta página desde HTTPS para solicitar ubicación.";
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      $("status").textContent =
+        "Este navegador no admite geolocalización.";
+      return;
+    }
+
+    $("status").textContent = "Esperando tu permiso…";
+
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        const c = position.coords;
+        $("lat").textContent = c.latitude;
+        $("lon").textContent = c.longitude;
+        $("accuracy").textContent =
+          "± " + Math.round(c.accuracy) + " metros";
+        $("status").textContent =
+          "Ubicación obtenida y mostrada localmente.";
+        $("map").replaceChildren();
+
+        const link = document.createElement("a");
+        link.href = "https://www.openstreetmap.org/?mlat=" +
+          encodeURIComponent(c.latitude) + "&mlon=" +
+          encodeURIComponent(c.longitude);
+        link.textContent = "Ver ubicación en el mapa";
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        $("map").appendChild(link);
+      },
+      error => {
+        const messages = {
+          1: "Permiso denegado.",
+          2: "Ubicación no disponible.",
+          3: "Se agotó el tiempo de espera."
+        };
+        $("status").textContent =
+          messages[error.code] || "No se pudo obtener la ubicación.";
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  });
+</script>
+</body>
+</html>
